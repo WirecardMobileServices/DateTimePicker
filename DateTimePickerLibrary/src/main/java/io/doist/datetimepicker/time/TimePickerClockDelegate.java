@@ -27,6 +27,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.AccessibilityDelegateCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
+import android.support.v7.widget.SwitchCompat;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
@@ -40,6 +41,8 @@ import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.CheckedTextView;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -81,11 +84,14 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
     private final View mHeaderView;
     private final TextView mHourView;
     private final TextView mMinuteView;
+    private final TextView allDayTextView;
     private final View mAmPmLayout;
     private final CheckedTextView mAmLabel;
     private final CheckedTextView mPmLabel;
     private final RadialTimePickerView mRadialTimePickerView;
     private final TextView mSeparatorView;
+    private final LinearLayout hoursMinutesHeader;
+    private final SwitchCompat allDaySwitch;
 
     private final String mAmText;
     private final String mPmText;
@@ -96,6 +102,7 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
     private int mInitialHourOfDay;
     private int mInitialMinute;
     private boolean mIs24HourView;
+    private boolean allDaySwitchOn;
 
     // For hardware IME input.
     private char mPlaceholderText;
@@ -141,8 +148,11 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
         mHeaderView = mainView.findViewById(R.id.time_header);
         mHeaderView.setBackground(a.getDrawable(R.styleable.TimePicker_headerBackground));
 
-        // Set up hour/minute labels.
+        hoursMinutesHeader = mainView.findViewById(R.id.hours_minutes_header);
+
+        // Set up hour/minute/all day labels.
         mHourView = mHeaderView.findViewById(R.id.hours);
+        allDayTextView = mHeaderView.findViewById(R.id.all_day);
         mHourView.setOnClickListener(mClickListener);
         ViewCompat.setAccessibilityDelegate(mHourView, new ClickActionDelegate(context, R.string.select_hours));
         mSeparatorView = mHeaderView.findViewById(R.id.separator);
@@ -155,6 +165,11 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
             mHourView.setTextAppearance(context, headerTimeTextAppearance);
             mSeparatorView.setTextAppearance(context, headerTimeTextAppearance);
             mMinuteView.setTextAppearance(context, headerTimeTextAppearance);
+        }
+
+        final int headerAllDayTextAppearance = a.getResourceId(R.styleable.TimePicker_headerAllDayTextAppearance, 0);
+        if (headerAllDayTextAppearance != 0) {
+            allDayTextView.setTextAppearance(context, headerAllDayTextAppearance);
         }
 
         // Now that we have text appearances out of the way, make sure the hour
@@ -187,6 +202,16 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
             mAmLabel.setTextAppearance(context, headerAmPmTextAppearance);
             mPmLabel.setTextAppearance(context, headerAmPmTextAppearance);
         }
+
+        // Set up all day switch.
+        allDaySwitch = mainView.findViewById(R.id.all_day_switch);
+        allDaySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                showAllDayHeader(isChecked);
+                allDaySwitchOn = isChecked;
+            }
+        });
 
         a.recycle();
 
@@ -277,6 +302,16 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
         updateHeaderMinute(mInitialMinute, false);
         // Invalidate everything
         mDelegator.invalidate();
+    }
+
+    private void showAllDayHeader(boolean show) {
+        if (show) {
+            hoursMinutesHeader.setVisibility(View.INVISIBLE);
+            allDayTextView.setVisibility(View.VISIBLE);
+        } else {
+            allDayTextView.setVisibility(View.INVISIBLE);
+            hoursMinutesHeader.setVisibility(View.VISIBLE);
+        }
     }
 
     private void updateRadialPicker(int index) {
@@ -391,6 +426,16 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
     }
 
     @Override
+    public void setIsAllDay(Boolean isAllDay) {
+        allDaySwitch.setChecked(isAllDay);
+    }
+
+    @Override
+    public boolean isAllDay() {
+        return allDaySwitchOn;
+    }
+
+    @Override
     public void setOnTimeChangedListener(TimePicker.OnTimeChangedListener callback) {
         mOnTimeChangedListener = callback;
     }
@@ -424,7 +469,7 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
     @Override
     public Parcelable onSaveInstanceState(Parcelable superState) {
         return new SavedState(superState, getCurrentHour(), getCurrentMinute(),
-                is24Hour(), inKbMode(), getTypedTimes(), getCurrentItemShowing());
+                is24Hour(), isAllDay(), inKbMode(), getTypedTimes(), getCurrentItemShowing());
     }
 
     @Override
@@ -530,17 +575,19 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
         private final int mHour;
         private final int mMinute;
         private final boolean mIs24HourMode;
+        private final boolean allDaySwitchOn;
         private final boolean mInKbMode;
         private final ArrayList<Integer> mTypedTimes;
         private final int mCurrentItemShowing;
 
         private SavedState(Parcelable superState, int hour, int minute, boolean is24HourMode,
-                           boolean isKbMode, ArrayList<Integer> typedTimes,
+                           boolean allDaySwitchOn, boolean isKbMode, ArrayList<Integer> typedTimes,
                            int currentItemShowing) {
             super(superState);
             mHour = hour;
             mMinute = minute;
             mIs24HourMode = is24HourMode;
+            this.allDaySwitchOn = allDaySwitchOn;
             mInKbMode = isKbMode;
             mTypedTimes = typedTimes;
             mCurrentItemShowing = currentItemShowing;
@@ -551,6 +598,7 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
             mHour = in.readInt();
             mMinute = in.readInt();
             mIs24HourMode = (in.readInt() == 1);
+            allDaySwitchOn = (in.readInt() == 1);
             mInKbMode = (in.readInt() == 1);
             mTypedTimes = in.readArrayList(getClass().getClassLoader());
             mCurrentItemShowing = in.readInt();
@@ -566,6 +614,10 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
 
         public boolean is24HourMode() {
             return mIs24HourMode;
+        }
+
+        public boolean isAllDaySwitchOn() {
+            return allDaySwitchOn;
         }
 
         public boolean inKbMode() {
@@ -586,6 +638,7 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
             dest.writeInt(mHour);
             dest.writeInt(mMinute);
             dest.writeInt(mIs24HourMode ? 1 : 0);
+            dest.writeInt(allDaySwitchOn ? 1 : 0);
             dest.writeInt(mInKbMode ? 1 : 0);
             dest.writeList(mTypedTimes);
             dest.writeInt(mCurrentItemShowing);
@@ -622,6 +675,9 @@ class TimePickerClockDelegate extends TimePicker.AbstractTimePickerDelegate impl
      */
     @Override
     public void onValueSelected(int pickerIndex, int newValue, boolean autoAdvance) {
+        if (allDaySwitch.isChecked()) {
+            allDaySwitch.setChecked(false);
+        }
         switch (pickerIndex) {
             case HOUR_INDEX:
                 if (mAllowAutoAdvance && autoAdvance) {

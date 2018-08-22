@@ -22,6 +22,7 @@
     android:gravity="center">
 
     <LinearLayout
+        android:id="@+id/hours_minutes_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -79,4 +80,12 @@
                 android:ellipsize="none" />
         </LinearLayout>
     </LinearLayout>
+    <TextView
+        android:id="@+id/all_day"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/all_day"
+        android:visibility="invisible"
+        android:layoutDirection="locale" />
 </FrameLayout>

@@ -16,16 +16,18 @@ public class TimePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
     private static final String KEY_HOUR_OF_DAY = "hour";
     private static final String KEY_MINUTE = "minute";
     private static final String KEY_IS_24_HOUR = "is24Hour";
+    private static final String KEY_IS_ALL_DAY = "isAllDay";
 
     private TimePicker mTimePicker;
 
     private OnTimeSetListener mOnTimeSetListener;
 
-    public static Bundle createArguments(int hourOfDay, int minute, boolean is24Hour) {
+    public static Bundle createArguments(int hourOfDay, int minute, boolean is24Hour, boolean isAllDay) {
         Bundle arguments = new Bundle();
         arguments.putInt(KEY_HOUR_OF_DAY, hourOfDay);
         arguments.putInt(KEY_MINUTE, minute);
         arguments.putBoolean(KEY_IS_24_HOUR, is24Hour);
+        arguments.putBoolean(KEY_IS_ALL_DAY, isAllDay);
         return arguments;
     }
 
@@ -42,11 +44,13 @@ public class TimePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
             int hourOfDay = arguments.getInt(KEY_HOUR_OF_DAY);
             int minute = arguments.getInt(KEY_MINUTE);
             boolean is24Hour = arguments.getBoolean(KEY_IS_24_HOUR);
+            boolean isAllDay = arguments.getBoolean(KEY_IS_ALL_DAY);
 
             mTimePicker = view.findViewById(R.id.timePicker);
             mTimePicker.setCurrentHour(hourOfDay);
             mTimePicker.setCurrentMinute(minute);
             mTimePicker.setIs24Hour(is24Hour);
+            mTimePicker.setIsAllDay(isAllDay);
         }
         mTimePicker.setOnTimeChangedListener(this);
         mTimePicker.setValidationCallback(new TimePicker.ValidationCallback() {
@@ -64,17 +68,19 @@ public class TimePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
     @Override
     protected AlertDialog.Builder onBindDialogBuilder(AlertDialog.Builder builder, View view) {
         return super.onBindDialogBuilder(builder, view)
-                    .setPositiveButton(R.string.done_label, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if (mOnTimeSetListener != null) {
                                 mOnTimeSetListener.onTimeSet(
                                         mTimePicker,
                                         mTimePicker.getCurrentHour(),
-                                        mTimePicker.getCurrentMinute());
+                                        mTimePicker.getCurrentMinute(),
+                                        mTimePicker.isAllDay());
                             }
                         }
-                    });
+                    })
+                    .setNegativeButton(android.R.string.cancel, null);
     }
 
     public void setOnTimeSetListener(OnTimeSetListener listener) {

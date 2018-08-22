@@ -20,6 +20,11 @@
         <item name="android:textColor">?android:attr/textColorSecondaryInverse</item>
     </style>
 
+    <style name="TextAppearance.Material.TimePicker.AllDayLabel" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">@dimen/timepicker_allday_label_size</item>
+        <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
+    </style>
+
     <style name="TextAppearance.Material.TimePicker.AmPmLabel" parent="TextAppearance.AppCompat">
         <item name="android:textSize">@dimen/timepicker_ampm_label_size</item>
         <item name="android:textAllCaps">true</item>
@@ -59,6 +64,7 @@
     <style name="Widget.Material.TimePicker" parent="">
         <item name="layout">@layout/time_picker_holo</item>
         <item name="headerTimeTextAppearance">@style/TextAppearance.Material.TimePicker.TimeLabel</item>
+        <item name="headerAllDayTextAppearance">@style/TextAppearance.Material.TimePicker.AllDayLabel</item>
         <item name="headerAmPmTextAppearance">@style/TextAppearance.Material.TimePicker.AmPmLabel</item>
         <item name="headerSelectedTextColor">?android:attr/textColorPrimaryInverse</item>
         <item name="headerBackground">?attr/colorAccent</item>

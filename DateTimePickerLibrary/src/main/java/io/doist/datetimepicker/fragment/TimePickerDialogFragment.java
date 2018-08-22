@@ -45,9 +45,9 @@ public class TimePickerDialogFragment extends DialogFragment {
     }
 
     public static TimePickerDialogFragment newInstance(OnTimeSetListener listener, int hourOfDay, int minute,
-                                                       boolean is24Hour) {
+                                                       boolean is24Hour, boolean isAllDay) {
         TimePickerDialogFragment fragment = new TimePickerDialogFragment();
-        fragment.setArguments(TimePickerDialogFragmentDelegate.createArguments(hourOfDay, minute, is24Hour));
+        fragment.setArguments(TimePickerDialogFragmentDelegate.createArguments(hourOfDay, minute, is24Hour, isAllDay));
         fragment.setOnTimeSetListener(listener);
         return fragment;
     }
