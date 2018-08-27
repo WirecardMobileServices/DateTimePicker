@@ -62,8 +62,6 @@
         <attr name="headerAmPmTextAppearance" format="reference" />
         <!-- The text appearance for the time header. -->
         <attr name="headerTimeTextAppearance" format="reference" />
-        <!-- The text appearance for the allday header. -->
-        <attr name="headerAllDayTextAppearance" format="reference" />
         <!-- The text color for selected time header of the TimePicker.
              This will override the value from the text appearance if it does
              not explicitly have a color set for the selected state. -->

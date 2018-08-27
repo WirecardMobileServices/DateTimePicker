@@ -123,22 +123,6 @@ public class TimePicker extends HapticFeedbackFrameLayout {
     }
 
     /**
-     * Set whether the all day switch is on or off.
-     *
-     * @param isAllDay
-     */
-    public void setIsAllDay(Boolean isAllDay) {
-        mDelegate.setIsAllDay(isAllDay);
-    }
-
-    /**
-     * @return true if the all day switch is on.
-     */
-    public boolean isAllDay() {
-        return mDelegate.isAllDay();
-    }
-
-    /**
      * Set the callback that indicates the time has been adjusted by the user.
      *
      * @param onTimeChangedListener the callback, should not be null.
@@ -228,9 +212,6 @@ public class TimePicker extends HapticFeedbackFrameLayout {
 
         void setIs24Hour(Boolean is24Hour);
         boolean is24Hour();
-
-        void setIsAllDay(Boolean isAllDay);
-        boolean isAllDay();
 
         void setOnTimeChangedListener(OnTimeChangedListener onTimeChangedListener);
         void setValidationCallback(ValidationCallback callback);

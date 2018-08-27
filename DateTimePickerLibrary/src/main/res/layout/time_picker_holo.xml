@@ -18,7 +18,6 @@
 -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -27,14 +26,6 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/timepicker_header_height"
         android:layout_gravity="center" />
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/all_day_switch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/timepicker_switch_layout_padding"
-        android:text="@string/all_day"
-        app:switchPadding="@dimen/timepicker_switch_padding"
-        android:gravity="end|center_vertical" />
     <io.doist.datetimepicker.time.RadialTimePickerView
         android:id="@+id/radial_picker"
         android:layout_width="wrap_content"

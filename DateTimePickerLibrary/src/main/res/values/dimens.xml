@@ -14,7 +14,6 @@
     <item name="timepicker_transition_end_radius_multiplier" format="float" type="string">1.3</item>
 
     <dimen name="timepicker_time_label_size">60sp</dimen>
-    <dimen name="timepicker_allday_label_size">36sp</dimen>
     <dimen name="timepicker_ampm_label_size">16sp</dimen>
     <dimen name="timepicker_ampm_horizontal_padding">12dp</dimen>
     <dimen name="timepicker_ampm_vertical_padding">16dp</dimen>
@@ -22,8 +21,6 @@
     <dimen name="timepicker_separator_padding">4dp</dimen>
     <dimen name="timepicker_header_height">96dp</dimen>
     <dimen name="timepicker_radial_picker_dimen">270dp</dimen>
-    <dimen name="timepicker_switch_layout_padding">8dp</dimen>
-    <dimen name="timepicker_switch_padding">4dp</dimen>
 
     <!-- Used by SimpleMonthView -->
     <dimen name="datepicker_day_number_size">12sp</dimen>

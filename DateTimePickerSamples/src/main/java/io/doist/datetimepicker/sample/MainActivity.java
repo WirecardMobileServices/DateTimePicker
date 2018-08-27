@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements OnDateSetListener
                 this,
                 mCalendar.get(Calendar.HOUR_OF_DAY),
                 mCalendar.get(Calendar.MINUTE),
-                true, true).show(getSupportFragmentManager(), TimePickerDialogFragmentCompat.TAG);
+                false).show(getSupportFragmentManager(), TimePickerDialogFragmentCompat.TAG);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements OnDateSetListener
     }
 
     @Override
-    public void onTimeSet(TimePicker view, int hourOfDay, int minute, boolean isAllDay) {
-        Toast.makeText(this, hourOfDay + ":" + minute + "... isAllDay " + isAllDay, Toast.LENGTH_SHORT).show();
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        Toast.makeText(this, hourOfDay + ":" + minute, Toast.LENGTH_SHORT).show();
     }
 }
