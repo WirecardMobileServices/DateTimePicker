@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2014 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.doist.datetimepicker.date;
 
 import android.content.Context;
@@ -22,13 +6,15 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PagerSnapHelper;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SnapHelper;
+import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.AbsListView;
-import android.widget.ListView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -36,24 +22,10 @@ import java.util.Locale;
 
 import io.doist.datetimepicker.util.MathUtils;
 
-/**
- * This displays a list of months in a calendar format with selectable days.
- */
-class DayPickerView extends ListView implements AbsListView.OnScrollListener {
+public class DayPickerViewR extends RecyclerView {
     private static final String TAG = "DayPickerView";
 
-    // How long the GoTo fling animation should last
-    private static final int GOTO_SCROLL_DURATION = 250;
-
-    // How long to wait after receiving an onScrollStateChanged notification before acting on it
-    private static final int SCROLL_CHANGE_DELAY = 40;
-
-    // so that the top line will be under the separator
-    private static final int LIST_TOP_OFFSET = -1;
-
-    private final SimpleMonthAdapter mAdapter = new SimpleMonthAdapter(getContext());
-
-    private final ScrollStateRunnable mScrollStateChangedRunnable = new ScrollStateRunnable(this);
+    private final SimpleMonthAdapterR mAdapter = new SimpleMonthAdapterR(getContext());
 
     private SimpleDateFormat mYearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
 
@@ -65,28 +37,32 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
 
     private Calendar mTempCalendar;
 
-    private OnDaySelectedListener mOnDaySelectedListener;
+    private SimpleMonthAdapterR.OnDaySelectedListener mOnDaySelectedListener;
 
-    // which month should be displayed/highlighted [0-11]
-    private int mCurrentMonthDisplayed;
-    // used for tracking what state listview is in
-    private int mPreviousScrollState = OnScrollListener.SCROLL_STATE_IDLE;
-    // used for tracking what state listview is in
-    private int mCurrentScrollState = OnScrollListener.SCROLL_STATE_IDLE;
+    private LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
 
-    private boolean mPerformingScroll;
-
-    public DayPickerView(Context context) {
+    public DayPickerViewR(Context context) {
         super(context);
+        init();
+    }
 
-        setAdapter(mAdapter);
-        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        setDrawSelectorOnTop(false);
-        setUpListView();
+    public DayPickerViewR(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
 
-        goTo(mSelectedDay.getTimeInMillis(), false, false, true);
+    public DayPickerViewR(Context context, @Nullable AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init();
+    }
 
+    void init() {
+        setLayoutManager(manager);
         mAdapter.setOnDaySelectedListener(mProxyOnDaySelectedListener);
+        setAdapter(mAdapter);
+        setHasFixedSize(true);
+        SnapHelper helper = new PagerSnapHelper();
+        helper.attachToRecyclerView(this);
     }
 
     /**
@@ -135,6 +111,7 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
     public void setAnchorDate(Calendar anchorDate) {
         mAdapter.setAnchor(anchorDate);
     }
+
     /**
      * Handles changes to date range.
      */
@@ -151,7 +128,7 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
      *
      * @param listener The listener to call.
      */
-    public void setOnDaySelectedListener(OnDaySelectedListener listener) {
+    public void setOnDaySelectedListener(SimpleMonthAdapterR.OnDaySelectedListener listener) {
         mOnDaySelectedListener = listener;
     }
 
@@ -160,19 +137,9 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
      * set a different list view behavior.
      */
     private void setUpListView() {
-        // Transparent background on scroll
-        setCacheColorHint(0);
-        // No dividers
-        setDivider(null);
-        // Items are clickable
-        setItemsCanFocus(true);
-        // The thumb gets in the way, so disable it
-        setFastScrollEnabled(false);
         setVerticalScrollBarEnabled(false);
-        setOnScrollListener(this);
+//        addOnScrollListener(this);
         setFadingEdgeLength(0);
-        // Make the scrolling behavior nicer
-        setFriction(ViewConfiguration.getScrollFriction());
     }
 
     private int getDiffMonths(Calendar start, Calendar end) {
@@ -202,15 +169,14 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
      * the list will not be scrolled unless forceScroll is true. This time may
      * optionally be highlighted as selected as well.
      *
-     * @param day The day to move to
-     * @param animate Whether to scroll to the given time or just redraw at the
-     *            new location
+     * @param day         The day to move to
+     * @param animate     Whether to scroll to the given time or just redraw at the
+     *                    new location
      * @param setSelected Whether to set the given time as selected
      * @param forceScroll Whether to recenter even if the time is already
-     *            visible
-     * @return Whether or not the view animated to the new location
+     *                    visible
      */
-    private boolean goTo(long day, boolean animate, boolean setSelected, boolean forceScroll) {
+    private void goTo(long day, boolean animate, boolean setSelected, boolean forceScroll) {
 
         // Set the selected day
         if (setSelected) {
@@ -220,92 +186,12 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
         mTempDay.setTimeInMillis(day);
         final int position = getPositionFromDay(day);
 
-        View child;
-        int i = 0;
-        int top = 0;
-        // Find a child that's completely in the view
-        do {
-            child = getChildAt(i++);
-            if (child == null) {
-                break;
-            }
-            top = child.getTop();
-        } while (top < 0);
-
-        // Compute the first and last position visible
-        int selectedPosition;
-        if (child != null) {
-            selectedPosition = getPositionForView(child);
-        } else {
-            selectedPosition = 0;
-        }
-
         if (setSelected) {
             mAdapter.setSelectedDay(mSelectedDay);
         }
-
-        // Check if the selected day is now outside of our visible range
-        // and if so scroll to the month that contains it
-        if (position != selectedPosition || forceScroll) {
-            setMonthDisplayed(mTempDay);
-            mPreviousScrollState = OnScrollListener.SCROLL_STATE_FLING;
-            if (animate) {
-                smoothScrollToPositionFromTop(
-                        position, LIST_TOP_OFFSET, GOTO_SCROLL_DURATION);
-                return true;
-            } else {
-                postSetSelection(position);
-            }
-        } else if (setSelected) {
-            setMonthDisplayed(mSelectedDay);
-        }
-        return false;
+        setSelection(position);
     }
 
-    public void postSetSelection(final int position) {
-        clearFocus();
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                setSelection(position);
-            }
-        });
-        onScrollStateChanged(this, OnScrollListener.SCROLL_STATE_IDLE);
-    }
-
-    /**
-     * Updates the title and selected month if the view has moved to a new
-     * month.
-     */
-    @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-                         int totalItemCount) {
-        SimpleMonthView child = (SimpleMonthView) view.getChildAt(0);
-        if (child == null) {
-            return;
-        }
-
-        mPreviousScrollState = mCurrentScrollState;
-    }
-
-    /**
-     * Sets the month displayed at the top of this view based on time. Override
-     * to add custom events when the title is changed.
-     */
-    protected void setMonthDisplayed(Calendar date) {
-        if (mCurrentMonthDisplayed != date.get(Calendar.MONTH)) {
-            mCurrentMonthDisplayed = date.get(Calendar.MONTH);
-            invalidateViews();
-        }
-    }
-
-    @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
-        // use a post to prevent re-entering onScrollStateChanged before it
-        // exits
-        mScrollStateChangedRunnable.doScrollStateChange(view, scrollState);
-    }
 
     void setCalendarTextColor(ColorStateList colors) {
         mAdapter.setCalendarTextColor(colors);
@@ -315,99 +201,72 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
         mAdapter.setCalendarTextAppearance(resId);
     }
 
-    protected class ScrollStateRunnable implements Runnable {
-        private int mNewState;
-        private View mParent;
-
-        ScrollStateRunnable(View view) {
-            mParent = view;
-        }
-
-        /**
-         * Sets up the runnable with a short delay in case the scroll state
-         * immediately changes again.
-         *
-         * @param view The list view that changed state
-         * @param scrollState The new state it changed to
-         */
-        public void doScrollStateChange(AbsListView view, int scrollState) {
-            mParent.removeCallbacks(this);
-            mNewState = scrollState;
-            mParent.postDelayed(this, SCROLL_CHANGE_DELAY);
-        }
-
-        @Override
-        public void run() {
-            mCurrentScrollState = mNewState;
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG,
-                      "new scroll state: " + mNewState + " old state: " + mPreviousScrollState);
-            }
-            // Fix the position after a scroll or a fling ends
-            if (mNewState == OnScrollListener.SCROLL_STATE_IDLE
-                    && mPreviousScrollState != OnScrollListener.SCROLL_STATE_IDLE
-                    && mPreviousScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                mPreviousScrollState = mNewState;
-                int i = 0;
-                View child = getChildAt(i);
-                while (child != null && child.getBottom() <= 0) {
-                    child = getChildAt(++i);
-                }
-                if (child == null) {
-                    // The view is no longer visible, just return
-                    return;
-                }
-                int firstPosition = getFirstVisiblePosition();
-                int lastPosition = getLastVisiblePosition();
-                boolean scroll = firstPosition != 0 && lastPosition != getCount() - 1;
-                final int top = child.getTop();
-                final int bottom = child.getBottom();
-                final int midpoint = getHeight() / 2;
-                if (scroll && top < LIST_TOP_OFFSET) {
-                    if (bottom > midpoint) {
-                        smoothScrollBy(top, GOTO_SCROLL_DURATION);
-                    } else {
-                        smoothScrollBy(bottom, GOTO_SCROLL_DURATION);
-                    }
-                }
-            } else {
-                mPreviousScrollState = mNewState;
-            }
-        }
-    }
-
-    /**
-     * Gets the position of the view that is most prominently displayed within the list view.
-     */
-    public int getMostVisiblePosition() {
-        final int firstPosition = getFirstVisiblePosition();
-        final int height = getHeight();
-
-        int maxDisplayedHeight = 0;
-        int mostVisibleIndex = 0;
-        int i=0;
-        int bottom = 0;
-        while (bottom < height) {
-            View child = getChildAt(i);
-            if (child == null) {
-                break;
-            }
-            bottom = child.getBottom();
-            int displayedHeight = Math.min(bottom, height) - Math.max(0, child.getTop());
-            if (displayedHeight > maxDisplayedHeight) {
-                mostVisibleIndex = i;
-                maxDisplayedHeight = displayedHeight;
-            }
-            i++;
-        }
-        return firstPosition + mostVisibleIndex;
-    }
+//    protected class ScrollStateRunnable implements Runnable {
+//        private int mNewState;
+//        private View mParent;
+//
+//        ScrollStateRunnable(View view) {
+//            mParent = view;
+//        }
+//
+//        /**
+//         * Sets up the runnable with a short delay in case the scroll state
+//         * immediately changes again.
+//         *
+//         * @param view        The list view that changed state
+//         * @param scrollState The new state it changed to
+//         */
+//        public void doScrollStateChange(AbsListView view, int scrollState) {
+//            mParent.removeCallbacks(this);
+//            mNewState = scrollState;
+//            mParent.postDelayed(this, SCROLL_CHANGE_DELAY);
+//        }
+//
+//        @Override
+//        public void run() {
+//            mCurrentScrollState = mNewState;
+//            if (Log.isLoggable(TAG, Log.DEBUG)) {
+//                Log.d(TAG,
+//                        "new scroll state: " + mNewState + " old state: " + mPreviousScrollState);
+//            }
+//            // Fix the position after a scroll or a fling ends
+//            if (mNewState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+//                    && mPreviousScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+//                    && mPreviousScrollState != AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+//                mPreviousScrollState = mNewState;
+//                int i = 0;
+//                View child = getChildAt(i);
+//                while (child != null && child.getBottom() <= 0) {
+//                    child = getChildAt(++i);
+//                }
+//                if (child == null) {
+//                    // The view is no longer visible, just return
+//                    return;
+//                }
+//                int firstPosition = getFirstVisiblePosition();
+//                int lastPosition = getLastVisiblePosition();
+//                boolean scroll = firstPosition != 0 && lastPosition != getCount() - 1;
+//                final int top = child.getTop();
+//                final int bottom = child.getBottom();
+//                final int midpoint = getHeight() / 2;
+//                if (scroll && top < LIST_TOP_OFFSET) {
+//                    if (bottom > midpoint) {
+//                        smoothScrollBy(top, GOTO_SCROLL_DURATION);
+//                    } else {
+//                        smoothScrollBy(bottom, GOTO_SCROLL_DURATION);
+//                    }
+//                }
+//            } else {
+//                mPreviousScrollState = mNewState;
+//            }
+//        }
+//    }
 
     /**
      * Attempts to return the date that has accessibility focus.
      *
      * @return The date that has accessibility focus, or {@code null} if no date
-     *         has focus.
+     * has focus.
      */
     private Calendar findAccessibilityFocus() {
         final int childCount = getChildCount();
@@ -447,17 +306,6 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
         }
 
         return false;
-    }
-
-    @Override
-    protected void layoutChildren() {
-        final Calendar focusedDay = findAccessibilityFocus();
-        super.layoutChildren();
-        if (mPerformingScroll) {
-            mPerformingScroll = false;
-        } else {
-            restoreAccessibilityFocus(focusedDay);
-        }
     }
 
     @Override
@@ -507,7 +355,7 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
         }
 
         // Figure out what month is showing.
-        final int firstVisiblePosition = getFirstVisiblePosition();
+        final int firstVisiblePosition = manager.findFirstVisibleItemPosition();
         final int month = firstVisiblePosition % 12;
         final int year = firstVisiblePosition / 12 + mMinDate.get(Calendar.YEAR);
         final Calendar day = Calendar.getInstance();
@@ -538,20 +386,22 @@ class DayPickerView extends ListView implements AbsListView.OnScrollListener {
         // Go to that month.
         announceForAccessibility(getMonthAndYearString(day));
         goTo(day.getTimeInMillis(), true, false, true);
-        mPerformingScroll = true;
         return true;
     }
 
-    public interface OnDaySelectedListener {
-        void onDaySelected(DayPickerView view, Calendar day);
+    public int getMostVisiblePosition() {
+        return manager.findFirstVisibleItemPosition();
     }
 
-    private final SimpleMonthAdapter.OnDaySelectedListener
-            mProxyOnDaySelectedListener = new SimpleMonthAdapter.OnDaySelectedListener() {
+    public void setSelection(int listPosition) {
+        scrollToPosition(listPosition);
+    }
+
+    private final SimpleMonthAdapterR.OnDaySelectedListener mProxyOnDaySelectedListener = new SimpleMonthAdapterR.OnDaySelectedListener() {
         @Override
-        public void onDaySelected(SimpleMonthAdapter adapter, Calendar day) {
+        public void onDaySelected(SimpleMonthAdapterR view, Calendar day) {
             if (mOnDaySelectedListener != null) {
-                mOnDaySelectedListener.onDaySelected(DayPickerView.this, day);
+                mOnDaySelectedListener.onDaySelected((SimpleMonthAdapterR) getAdapter(), day);
             }
         }
     };

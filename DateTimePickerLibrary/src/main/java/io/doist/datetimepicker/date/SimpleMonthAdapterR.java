@@ -1,38 +1,19 @@
-/*
- * Copyright (C) 2014 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.doist.datetimepicker.date;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.view.View;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.BaseAdapter;
 
 import java.util.Calendar;
 
 import io.doist.datetimepicker.R;
 
-/**
- * An adapter for a list of {@link SimpleMonthView} items.
- */
-class SimpleMonthAdapter extends BaseAdapter {
+public class SimpleMonthAdapterR extends RecyclerView.Adapter<SimpleMonthAdapterR.MonthViewHolder> {
     private final Calendar mMinDate = Calendar.getInstance();
     private final Calendar mMaxDate = Calendar.getInstance();
     private Calendar anchor = null;
@@ -45,15 +26,71 @@ class SimpleMonthAdapter extends BaseAdapter {
 
     private int mFirstDayOfWeek;
 
-    public SimpleMonthAdapter(Context context) {
-        mContext = context;
+    public SimpleMonthAdapterR(Context mContext) {
+        this.mContext = mContext;
+    }
+
+    @NonNull
+    @Override
+    public MonthViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new MonthViewHolder(new SimpleMonthView(mContext));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MonthViewHolder holder, int position) {
+        final int minMonth = mMinDate.get(Calendar.MONTH);
+        final int minYear = mMinDate.get(Calendar.YEAR);
+        final int currentMonth = position + minMonth;
+        final int month = currentMonth % 12;
+        final int year = currentMonth / 12 + minYear;
+        final int selectedDay;
+        if (isSelectedDayInMonth(year, month)) {
+            selectedDay = mSelectedDay.get(Calendar.DAY_OF_MONTH);
+        } else {
+            selectedDay = -1;
+        }
+
+        // Invokes requestLayout() to ensure that the recycled view is set with the appropriate
+        // height/number of weeks before being displayed.
+        holder.reuse();
+
+        final int enabledDayRangeStart;
+        if (minMonth == month && minYear == year) {
+            enabledDayRangeStart = mMinDate.get(Calendar.DAY_OF_MONTH);
+        } else {
+            enabledDayRangeStart = 1;
+        }
+
+        final int enabledDayRangeEnd;
+        if (mMaxDate.get(Calendar.MONTH) == month && mMaxDate.get(Calendar.YEAR) == year) {
+            enabledDayRangeEnd = mMaxDate.get(Calendar.DAY_OF_MONTH);
+        } else {
+            enabledDayRangeEnd = 31;
+        }
+
+        holder.setMonthParams(selectedDay, month, year, mFirstDayOfWeek,
+                enabledDayRangeStart, enabledDayRangeEnd);
+        if (anchor != null) {
+            if (isAnchorInMonth(year, month)) {
+                holder.setAnchor(anchor.get(Calendar.DAY_OF_MONTH));
+            }
+            holder.markDays(getMonthMarkType(year, month));
+        }
+        holder.invalidate();
+    }
+
+    @Override
+    public int getItemCount() {
+        final int diffYear = mMaxDate.get(Calendar.YEAR) - mMinDate.get(Calendar.YEAR);
+        final int diffMonth = mMaxDate.get(Calendar.MONTH) - mMinDate.get(Calendar.MONTH);
+        return diffMonth + 12 * diffYear + 1;
     }
 
     public void setRange(Calendar min, Calendar max) {
         mMinDate.setTimeInMillis(min.getTimeInMillis());
         mMaxDate.setTimeInMillis(max.getTimeInMillis());
 
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 
     public void setAnchor(Calendar anchor) {
@@ -63,7 +100,7 @@ class SimpleMonthAdapter extends BaseAdapter {
     public void setFirstDayOfWeek(int firstDayOfWeek) {
         mFirstDayOfWeek = firstDayOfWeek;
 
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 
     public int getFirstDayOfWeek() {
@@ -113,89 +150,8 @@ class SimpleMonthAdapter extends BaseAdapter {
     }
 
     @Override
-    public int getCount() {
-        final int diffYear = mMaxDate.get(Calendar.YEAR) - mMinDate.get(Calendar.YEAR);
-        final int diffMonth = mMaxDate.get(Calendar.MONTH) - mMinDate.get(Calendar.MONTH);
-        return diffMonth + 12 * diffYear + 1;
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return null;
-    }
-
-    @Override
     public long getItemId(int position) {
         return position;
-    }
-
-    @Override
-    public boolean hasStableIds() {
-        return true;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        final SimpleMonthView v;
-//        if (convertView != null) {
-//            v = (SimpleMonthView) convertView;
-//        } else {
-        v = new SimpleMonthView(mContext);
-
-        // Set up the new view
-        final AbsListView.LayoutParams params = new AbsListView.LayoutParams(
-                AbsListView.LayoutParams.MATCH_PARENT, AbsListView.LayoutParams.MATCH_PARENT);
-        v.setLayoutParams(params);
-        v.setClickable(true);
-        v.setOnDayClickListener(mOnDayClickListener);
-
-        if (mCalendarTextColors != null) {
-            v.setTextColor(mCalendarTextColors);
-        }
-//        }
-
-        final int minMonth = mMinDate.get(Calendar.MONTH);
-        final int minYear = mMinDate.get(Calendar.YEAR);
-        final int currentMonth = position + minMonth;
-        final int month = currentMonth % 12;
-        final int year = currentMonth / 12 + minYear;
-        final int selectedDay;
-        if (isSelectedDayInMonth(year, month)) {
-            selectedDay = mSelectedDay.get(Calendar.DAY_OF_MONTH);
-        } else {
-            selectedDay = -1;
-        }
-
-        // Invokes requestLayout() to ensure that the recycled view is set with the appropriate
-        // height/number of weeks before being displayed.
-        v.reuse();
-
-        final int enabledDayRangeStart;
-        if (minMonth == month && minYear == year) {
-            enabledDayRangeStart = mMinDate.get(Calendar.DAY_OF_MONTH);
-        } else {
-            enabledDayRangeStart = 1;
-        }
-
-        final int enabledDayRangeEnd;
-        if (mMaxDate.get(Calendar.MONTH) == month && mMaxDate.get(Calendar.YEAR) == year) {
-            enabledDayRangeEnd = mMaxDate.get(Calendar.DAY_OF_MONTH);
-        } else {
-            enabledDayRangeEnd = 31;
-        }
-
-        v.setMonthParams(selectedDay, month, year, mFirstDayOfWeek,
-                enabledDayRangeStart, enabledDayRangeEnd);
-        if (anchor != null) {
-            if (isAnchorInMonth(year, month)) {
-                v.setAnchor(anchor.get(Calendar.DAY_OF_MONTH));
-            }
-            v.markDays(getMonthMarkType(year, month));
-        }
-        v.invalidate();
-
-        return v;
     }
 
     private SimpleMonthView.Mark getMonthMarkType(int year, int month) {
@@ -250,13 +206,49 @@ class SimpleMonthAdapter extends BaseAdapter {
                 setSelectedDay(day);
 
                 if (mOnDaySelectedListener != null) {
-                    mOnDaySelectedListener.onDaySelected(SimpleMonthAdapter.this, day);
+                    mOnDaySelectedListener.onDaySelected(SimpleMonthAdapterR.this, day);
                 }
             }
         }
     };
 
     public interface OnDaySelectedListener {
-        void onDaySelected(SimpleMonthAdapter view, Calendar day);
+        void onDaySelected(SimpleMonthAdapterR adapter, Calendar day);
+    }
+
+    class MonthViewHolder extends RecyclerView.ViewHolder {
+
+        MonthViewHolder(SimpleMonthView itemView) {
+            super(itemView);
+            // Set up the new view
+            final AbsListView.LayoutParams params = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT, AbsListView.LayoutParams.MATCH_PARENT);
+            itemView.setLayoutParams(params);
+            itemView.setClickable(true);
+            itemView.setOnDayClickListener(mOnDayClickListener);
+
+            if (mCalendarTextColors != null) {
+                itemView.setTextColor(mCalendarTextColors);
+            }
+        }
+
+        void reuse() {
+            ((SimpleMonthView) itemView).reuse();
+        }
+
+        void setMonthParams(int selectedDay, int month, int year, int mFirstDayOfWeek, int enabledDayRangeStart, int enabledDayRangeEnd) {
+            ((SimpleMonthView) itemView).setMonthParams(selectedDay, month, year, mFirstDayOfWeek, enabledDayRangeStart, enabledDayRangeEnd);
+        }
+
+        void setAnchor(int anchor) {
+            ((SimpleMonthView) itemView).setAnchor(anchor);
+        }
+
+        void markDays(SimpleMonthView.Mark monthMarkType) {
+            ((SimpleMonthView) itemView).markDays(monthMarkType);
+        }
+
+        void invalidate() {
+            itemView.invalidate();
+        }
     }
 }

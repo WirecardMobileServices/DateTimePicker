@@ -29,6 +29,7 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.support.v4.widget.ExploreByTouchHelper;
@@ -77,7 +78,9 @@ class SimpleMonthView extends View {
     private final int mMonthHeaderSize;
     private final int mDaySelectedCircleSize;
 
-    /** Single-letter (when available) formatter for the day of week label. */
+    /**
+     * Single-letter (when available) formatter for the day of week label.
+     */
     private SimpleDateFormat mDayFormatter = new SimpleDateFormat("EEEEE", Locale.getDefault());
     // For compat single-letter day of week label.
     private DateFormatSymbols mDateFormatSymbols = new DateFormatSymbols();
@@ -146,6 +149,10 @@ class SimpleMonthView extends View {
     private int mNormalTextColor;
     private int mDisabledTextColor;
     private int mSelectedDayColor;
+    private int anchor = -1;
+    private Mark markDays = Mark.NONE;
+    private Paint mSelectedDayNumberPaint;
+
 
     public SimpleMonthView(Context context) {
         this(context, null);
@@ -167,15 +174,11 @@ class SimpleMonthView extends View {
 
         mMiniDayNumberTextSize = res.getDimensionPixelSize(R.dimen.datepicker_day_number_size);
         mMonthLabelTextSize = res.getDimensionPixelSize(R.dimen.datepicker_month_label_size);
-        mMonthDayLabelTextSize = res.getDimensionPixelSize(
-                R.dimen.datepicker_month_day_label_text_size);
-        mMonthHeaderSize = res.getDimensionPixelOffset(
-                R.dimen.datepicker_month_list_item_header_height);
-        mDaySelectedCircleSize = res.getDimensionPixelSize(
-                R.dimen.datepicker_day_number_select_circle_radius);
-
-        mRowHeight = (res.getDimensionPixelOffset(R.dimen.datepicker_view_animator_height)
-                - mMonthHeaderSize) / MAX_NUM_ROWS;
+        mMonthDayLabelTextSize = res.getDimensionPixelSize(R.dimen.datepicker_month_day_label_text_size);
+        mPadding = res.getDimensionPixelSize(R.dimen.datepicker_padding);
+        mMonthHeaderSize = res.getDimensionPixelOffset(R.dimen.datepicker_month_list_item_header_height) + (mPadding * 2);
+        mDaySelectedCircleSize = res.getDimensionPixelSize(R.dimen.datepicker_day_number_select_circle_radius);
+        mRowHeight = (res.getDimensionPixelOffset(R.dimen.datepicker_view_animator_height) - mMonthHeaderSize) / MAX_NUM_ROWS;
 
         // Set up accessibility components.
         mTouchHelper = new MonthViewTouchHelper(this);
@@ -185,6 +188,7 @@ class SimpleMonthView extends View {
 
         // Sets up any standard paints that will be used
         initView();
+        mSelectedDayNumberPaint.setColor(ContextCompat.getColor(this.getContext(), android.R.color.white));
     }
 
     @Override
@@ -202,12 +206,10 @@ class SimpleMonthView extends View {
         mMonthTitlePaint.setColor(mNormalTextColor);
         mMonthDayLabelPaint.setColor(mNormalTextColor);
 
-        mDisabledTextColor = colors.getColorForState(
-                EMPTY_STATE_SET, res.getColor( R.color.datepicker_default_disabled_text_color_holo_light));
+        mDisabledTextColor = colors.getColorForState(EMPTY_STATE_SET, res.getColor(R.color.datepicker_default_disabled_text_color_holo_light));
         mDayNumberDisabledPaint.setColor(mDisabledTextColor);
 
-        mSelectedDayColor = colors.getColorForState(
-                ENABLED_SELECTED_STATE_SET, res.getColor(android.R.color.holo_blue_light));
+        mSelectedDayColor = colors.getColorForState(ENABLED_SELECTED_STATE_SET, res.getColor(android.R.color.holo_blue_light));
         mDayNumberSelectedPaint.setColor(mSelectedDayColor);
         mDayNumberSelectedPaint.setAlpha(SELECTED_CIRCLE_ALPHA);
     }
@@ -281,6 +283,13 @@ class SimpleMonthView extends View {
         mDayNumberPaint.setStyle(Style.FILL);
         mDayNumberPaint.setFakeBoldText(false);
 
+        mSelectedDayNumberPaint = new Paint();
+        mSelectedDayNumberPaint.setAntiAlias(true);
+        mSelectedDayNumberPaint.setTextSize(mMiniDayNumberTextSize);
+        mSelectedDayNumberPaint.setTextAlign(Align.CENTER);
+        mSelectedDayNumberPaint.setStyle(Style.FILL);
+        mSelectedDayNumberPaint.setFakeBoldText(false);
+
         mDayNumberDisabledPaint = new Paint();
         mDayNumberDisabledPaint.setAntiAlias(true);
         mDayNumberDisabledPaint.setColor(mDisabledTextColor);
@@ -311,13 +320,13 @@ class SimpleMonthView extends View {
      * default to no focus month if no value is passed in. The only required parameter is the
      * week start.
      *
-     * @param selectedDay the selected day of the month, or -1 for no selection.
-     * @param month the month.
-     * @param year the year.
-     * @param weekStart which day the week should start on. {@link Calendar#SUNDAY} through
-     *        {@link Calendar#SATURDAY}.
+     * @param selectedDay     the selected day of the month, or -1 for no selection.
+     * @param month           the month.
+     * @param year            the year.
+     * @param weekStart       which day the week should start on. {@link Calendar#SUNDAY} through
+     *                        {@link Calendar#SATURDAY}.
      * @param enabledDayStart the first enabled day.
-     * @param enabledDayEnd the last enabled day.
+     * @param enabledDayEnd   the last enabled day.
      */
     void setMonthParams(int selectedDay, int month, int year, int weekStart, int enabledDayStart,
                         int enabledDayEnd) {
@@ -394,6 +403,7 @@ class SimpleMonthView extends View {
 
     public void reuse() {
         mNumRows = DEFAULT_NUM_ROWS;
+        anchor = -1;
         requestLayout();
     }
 
@@ -412,8 +422,7 @@ class SimpleMonthView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mRowHeight * mNumRows
-                + mMonthHeaderSize);
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mRowHeight * mNumRows + mMonthHeaderSize);
     }
 
     @Override
@@ -430,11 +439,11 @@ class SimpleMonthView extends View {
         mStringBuilder.setLength(0);
         long millis = mCalendar.getTimeInMillis();
         return DateUtils.formatDateRange(getContext(), mFormatter, millis, millis, flags,
-                                         Time.getCurrentTimezone()).toString();
+                Time.getCurrentTimezone()).toString();
     }
 
     private void drawMonthTitle(Canvas canvas) {
-        final float x = (mWidth + 2 * mPadding) / 2f;
+        final float x = (mWidth + mPadding) / 2f;
         final float y = (mMonthHeaderSize - mMonthDayLabelTextSize) / 2f;
         canvas.drawText(getMonthAndYearString(), x, y, mMonthTitlePaint);
     }
@@ -472,15 +481,24 @@ class SimpleMonthView extends View {
      * Draws the month days.
      */
     private void drawDays(Canvas canvas) {
-        int y = (((mRowHeight + mMiniDayNumberTextSize) / 2) - DAY_SEPARATOR_WIDTH)
-                + mMonthHeaderSize;
+        Paint anchorRangePaint = new Paint(mDayNumberSelectedPaint);
+        anchorRangePaint.setAlpha(30);
+        Paint anchorPaint = new Paint(mDayNumberSelectedPaint);
+        anchorPaint.setAlpha(96);
+        int y = (((mRowHeight + mMiniDayNumberTextSize) / 2) - DAY_SEPARATOR_WIDTH) + mMonthHeaderSize;
         int dayWidthHalf = (mWidth - mPadding * 2) / (mNumDays * 2);
         int j = findDayOffset();
         for (int day = 1; day <= mNumCells; day++) {
             int x = (2 * j + 1) * dayWidthHalf + mPadding;
             if (mSelectedDay == day) {
-                canvas.drawCircle(x, y - (mMiniDayNumberTextSize / 3), mDaySelectedCircleSize,
-                                  mDayNumberSelectedPaint);
+                canvas.drawCircle(x, y - (mMiniDayNumberTextSize / 3), mDaySelectedCircleSize, mDayNumberSelectedPaint);
+            } else if (anchor == day) {
+                canvas.drawCircle(x, y - (mMiniDayNumberTextSize / 3), mDaySelectedCircleSize, anchorPaint);
+            }
+
+            if (markDays == Mark.ALL || (markDays == Mark.BEWEEN && isInAnchorRange(day)) || (markDays == Mark.AFTER && afterAnchorOrSelected(day))
+                    || (markDays == Mark.UNTIL && beforeAnchorOrSelected(day))) {
+                canvas.drawCircle(x, y - (mMiniDayNumberTextSize / 3), mDaySelectedCircleSize, anchorRangePaint);
             }
 
             if (mHasToday && mToday == day) {
@@ -488,8 +506,15 @@ class SimpleMonthView extends View {
             } else {
                 mDayNumberPaint.setColor(mNormalTextColor);
             }
-            final Paint paint = (day < mEnabledDayStart || day > mEnabledDayEnd) ?
-                                mDayNumberDisabledPaint : mDayNumberPaint;
+            final Paint paint;
+            if (day < mEnabledDayStart || day > mEnabledDayEnd) {
+                paint = mDayNumberDisabledPaint;
+            } else if (day == anchor || day == mSelectedDay) {
+                paint = mSelectedDayNumberPaint;
+            } else {
+                paint = mDayNumberPaint;
+            }
+
             canvas.drawText(String.format("%d", day), x, y, paint);
             j++;
             if (j == mNumDays) {
@@ -499,9 +524,20 @@ class SimpleMonthView extends View {
         }
     }
 
+    private boolean afterAnchorOrSelected(int day) {
+        return (anchor > 0 && day > anchor) || (mSelectedDay > 0 && day > mSelectedDay);
+    }
+
+    private boolean beforeAnchorOrSelected(int day) {
+        return day < anchor || (day < mSelectedDay && mSelectedDay > 0);
+    }
+
+    private boolean isInAnchorRange(int day) {
+        return anchor > 0 && ((day > mSelectedDay && day < anchor) || (day < mSelectedDay && day > anchor));
+    }
+
     private int findDayOffset() {
-        return (mDayOfWeekStart < mWeekStart ? (mDayOfWeekStart + mNumDays) : mDayOfWeekStart)
-                - mWeekStart;
+        return (mDayOfWeekStart < mWeekStart ? (mDayOfWeekStart + mNumDays) : mDayOfWeekStart) - mWeekStart;
     }
 
     /**
@@ -547,7 +583,7 @@ class SimpleMonthView extends View {
 
     /**
      * @return The date that has accessibility focus, or {@code null} if no date
-     *         has focus
+     * has focus
      */
     Calendar getAccessibilityFocus() {
         final int day = mTouchHelper.getFocusedVirtualView();
@@ -572,7 +608,7 @@ class SimpleMonthView extends View {
      *
      * @param day The date which should receive focus
      * @return {@code false} if the date is not valid for this month view, or
-     *         {@code true} if the date received focus
+     * {@code true} if the date received focus
      */
     boolean restoreAccessibilityFocus(Calendar day) {
         if ((day.get(Calendar.YEAR) != mYear) || (day.get(Calendar.MONTH) != mMonth) ||
@@ -581,6 +617,14 @@ class SimpleMonthView extends View {
         }
         mTouchHelper.setFocusedVirtualView(day.get(Calendar.DAY_OF_MONTH));
         return true;
+    }
+
+    public void setAnchor(int anchor) {
+        this.anchor = anchor;
+    }
+
+    public void markDays(Mark markType) {
+        markDays = markType;
     }
 
     /**
@@ -661,7 +705,7 @@ class SimpleMonthView extends View {
         /**
          * Calculates the bounding rectangle of a given time object.
          *
-         * @param day The day to calculate bounds for
+         * @param day  The day to calculate bounds for
          * @param rect The rectangle in which to store the bounds
          */
         private void getItemBounds(int day, Rect rect) {
@@ -689,7 +733,7 @@ class SimpleMonthView extends View {
         private CharSequence getItemDescription(int day) {
             mTempCalendar.set(mYear, mMonth, day);
             final CharSequence date = DateFormat.format(DATE_FORMAT,
-                                                        mTempCalendar.getTimeInMillis());
+                    mTempCalendar.getTimeInMillis());
 
             if (day == mSelectedDay) {
                 return getContext().getString(R.string.item_is_selected, date);
@@ -704,5 +748,9 @@ class SimpleMonthView extends View {
      */
     public interface OnDayClickListener {
         void onDayClick(SimpleMonthView view, Calendar day);
+    }
+
+    enum Mark {
+        NONE, ALL, UNTIL, AFTER, BEWEEN
     }
 }

@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 
+import java.util.Calendar;
+
 import io.doist.datetimepicker.R;
 import io.doist.datetimepicker.date.DatePicker;
 import io.doist.datetimepicker.date.OnDateSetListener;
@@ -16,6 +18,9 @@ public class DatePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
     private static final String KEY_YEAR = "year";
     private static final String KEY_MONTH_OF_YEAR = "month";
     private static final String KEY_DAY_OF_MONTH = "day";
+    private static final String ANCHOR_KEY_YEAR = "anchoryear";
+    private static final String ANCHOR_KEY_MONTH_OF_YEAR = "anchormonth";
+    private static final String ANCHOR_KEY_DAY_OF_MONTH = "anchorday";
 
     private DatePicker mDatePicker;
 
@@ -26,6 +31,14 @@ public class DatePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
         arguments.putInt(KEY_YEAR, year);
         arguments.putInt(KEY_MONTH_OF_YEAR, monthOfYear);
         arguments.putInt(KEY_DAY_OF_MONTH, dayOfMonth);
+        return arguments;
+    }
+
+    public static Bundle createArguments(int year, int monthOfYear, int dayOfMonth, int anchorYear, int anchorMonthOfYear, int anchorDayOfMonth) {
+        Bundle arguments = createArguments(year, monthOfYear, dayOfMonth);
+        arguments.putInt(ANCHOR_KEY_YEAR, anchorYear);
+        arguments.putInt(ANCHOR_KEY_MONTH_OF_YEAR, anchorMonthOfYear);
+        arguments.putInt(ANCHOR_KEY_DAY_OF_MONTH, anchorDayOfMonth);
         return arguments;
     }
 
@@ -43,6 +56,11 @@ public class DatePickerDialogFragmentDelegate extends PickerDialogFragmentDelega
             int monthOfYear = arguments.getInt(KEY_MONTH_OF_YEAR);
             int dayOfMonth = arguments.getInt(KEY_DAY_OF_MONTH);
             mDatePicker.init(year, monthOfYear, dayOfMonth, this);
+            if (arguments.containsKey(ANCHOR_KEY_YEAR) && arguments.containsKey(ANCHOR_KEY_MONTH_OF_YEAR) && arguments.containsKey(ANCHOR_KEY_DAY_OF_MONTH)) {
+                Calendar anchor = Calendar.getInstance();
+                anchor.set(arguments.getInt(ANCHOR_KEY_YEAR), arguments.getInt(ANCHOR_KEY_MONTH_OF_YEAR), arguments.getInt(ANCHOR_KEY_DAY_OF_MONTH));
+                mDatePicker.setAnchorDate(anchor);
+            }
         } else {
             mDatePicker.setOnDateChangedListener(this);
         }

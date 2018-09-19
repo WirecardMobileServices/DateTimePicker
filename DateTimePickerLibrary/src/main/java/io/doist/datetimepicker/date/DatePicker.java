@@ -220,6 +220,14 @@ public class DatePicker extends HapticFeedbackFrameLayout {
         mDelegate.setValidationCallback(callback);
     }
 
+    public void setAnchorDate(Calendar anchorDate) {
+        mDelegate.setAnchorDate(anchorDate);
+    }
+
+    public long getAnchorDate() {
+        return mDelegate.getAnchorDate().getTimeInMillis();
+    }
+
     @Override
     public void setEnabled(boolean enabled) {
         if (mDelegate.isEnabled() == enabled) {
@@ -347,6 +355,10 @@ public class DatePicker extends HapticFeedbackFrameLayout {
         void setMaxDate(long maxDate);
 
         Calendar getMaxDate();
+
+        void setAnchorDate(Calendar anchorDate);
+
+        Calendar getAnchorDate();
 
         void setEnabled(boolean enabled);
 

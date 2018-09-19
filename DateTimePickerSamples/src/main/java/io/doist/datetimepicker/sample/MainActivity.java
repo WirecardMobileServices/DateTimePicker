@@ -11,11 +11,11 @@ import android.widget.Toast;
 import java.util.Calendar;
 
 import io.doist.datetimepicker.date.DatePicker;
-import io.doist.datetimepicker.fragment.DatePickerDialogFragmentCompat;
 import io.doist.datetimepicker.date.OnDateSetListener;
+import io.doist.datetimepicker.fragment.DatePickerDialogFragmentCompat;
+import io.doist.datetimepicker.fragment.TimePickerDialogFragmentCompat;
 import io.doist.datetimepicker.time.OnTimeSetListener;
 import io.doist.datetimepicker.time.TimePicker;
-import io.doist.datetimepicker.fragment.TimePickerDialogFragmentCompat;
 
 
 public class MainActivity extends AppCompatActivity implements OnDateSetListener, OnTimeSetListener {
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnDateSetListener
                 this,
                 mCalendar.get(Calendar.YEAR),
                 mCalendar.get(Calendar.MONTH),
-                mCalendar.get(Calendar.DAY_OF_MONTH)).show(getSupportFragmentManager(), DatePickerDialogFragmentCompat.TAG);
+                mCalendar.get(Calendar.DAY_OF_MONTH), 2018, 8, 7).show(getSupportFragmentManager(), DatePickerDialogFragmentCompat.TAG);
     }
 
     public void showTimePicker(View v) {

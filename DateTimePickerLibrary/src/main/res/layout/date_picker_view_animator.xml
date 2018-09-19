@@ -15,7 +15,9 @@
 -->
 <io.doist.datetimepicker.date.AccessibleDateAnimator
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/animator"
+    android:id="@+id/animator"
         android:layout_width="@dimen/datepicker_component_width"
         android:layout_height="@dimen/datepicker_view_animator_height"
-        android:gravity="center" />
+    android:gravity="center">
+
+</io.doist.datetimepicker.date.AccessibleDateAnimator>

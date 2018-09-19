@@ -18,35 +18,39 @@ package io.doist.datetimepicker.date;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.support.annotation.ColorInt;
+import android.support.annotation.Dimension;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import io.doist.datetimepicker.R;
 
 /**
  * Displays a selectable list of years.
  */
-class YearPickerView extends ListView implements AdapterView.OnItemClickListener,
-                                                 OnDateChangedListener {
+class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYearSelectedListener {
     private final Calendar mMinDate = Calendar.getInstance();
     private final Calendar mMaxDate = Calendar.getInstance();
 
-    private final YearAdapter mAdapter;
-    private final int mViewSize;
+    private YearAdapter mAdapter;
     private final int mChildSize;
 
     private DatePickerController mController;
 
-    private int mSelectedPosition = -1;
-    private int mYearSelectedCircleColor;
+    private int mYearSelectedColor;
+    private LinearLayoutManager manager = new LinearLayoutManager(getContext());
 
     public YearPickerView(Context context) {
         this(context, null);
@@ -59,12 +63,10 @@ class YearPickerView extends ListView implements AdapterView.OnItemClickListener
     public YearPickerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        final LayoutParams frame = new LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        final LayoutParams frame = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         setLayoutParams(frame);
 
         final Resources res = context.getResources();
-        mViewSize = res.getDimensionPixelOffset(R.dimen.datepicker_view_animator_height);
         mChildSize = res.getDimensionPixelOffset(R.dimen.datepicker_year_label_height);
 
         setVerticalFadingEdgeEnabled(true);
@@ -72,104 +74,49 @@ class YearPickerView extends ListView implements AdapterView.OnItemClickListener
 
         final int paddingTop = res.getDimensionPixelSize(R.dimen.datepicker_year_picker_padding_top);
         setPadding(0, paddingTop, 0, 0);
-
-        setOnItemClickListener(this);
-        setDividerHeight(0);
-
-        mAdapter = new YearAdapter(getContext(), R.layout.year_label_text_view);
-        setAdapter(mAdapter);
+        Calendar now = Calendar.getInstance();
+        mMinDate.set(Calendar.YEAR, now.get(Calendar.YEAR) - 100);
+        mMaxDate.set(Calendar.YEAR, now.get(Calendar.YEAR) + 100);
     }
 
     public void setRange(Calendar min, Calendar max) {
         mMinDate.setTimeInMillis(min.getTimeInMillis());
         mMaxDate.setTimeInMillis(max.getTimeInMillis());
-
-        updateAdapterData();
     }
 
     public void init(DatePickerController controller) {
         mController = controller;
         mController.registerOnDateChangedListener(this);
-
-        updateAdapterData();
-
+        setLayoutManager(manager);
+        mAdapter = new YearAdapter(getContext(), updateToAdapterData(), Calendar.getInstance().get(Calendar.YEAR), this);
+        setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
         onDateChanged();
     }
 
     public void setYearSelectedCircleColor(int color) {
-        if (color != mYearSelectedCircleColor) {
-            mYearSelectedCircleColor = color;
+        if (color != mYearSelectedColor) {
+            mYearSelectedColor = color;
         }
         requestLayout();
     }
 
     public int getYearSelectedCircleColor()  {
-        return mYearSelectedCircleColor;
+        return mYearSelectedColor;
     }
 
-    private void updateAdapterData() {
-        mAdapter.clear();
+    private List<Integer> updateToAdapterData() {
 
         final int maxYear = mMaxDate.get(Calendar.YEAR);
-        for (int year = mMinDate.get(Calendar.YEAR); year <= maxYear; year++) {
-            mAdapter.add(year);
-        }
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mController.tryVibrate();
-        if (position != mSelectedPosition) {
-            mSelectedPosition = position;
-            mAdapter.notifyDataSetChanged();
-        }
-        mController.onYearSelected(mAdapter.getItem(position));
-    }
-
-    void setItemTextAppearance(int resId) {
-        mAdapter.setItemTextAppearance(resId);
-    }
-
-    private class YearAdapter extends ArrayAdapter<Integer> {
-        int mItemTextAppearanceResId;
-
-        public YearAdapter(Context context, int resource) {
-            super(context, resource);
+        final int minYear = mMinDate.get(Calendar.YEAR);
+        List<Integer> years = new ArrayList<>(maxYear - minYear);
+        for (int year = minYear; year <= maxYear; year++) {
+            years.add(year);
         }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            TextViewWithCircularIndicator v = (TextViewWithCircularIndicator)
-                    super.getView(position, convertView, parent);
-            v.setTextAppearance(getContext(), mItemTextAppearanceResId);
-            v.requestLayout();
-            int year = getItem(position);
-            boolean selected = mController.getSelectedDay().get(Calendar.YEAR) == year;
-            v.setDrawIndicator(selected);
-            if (selected) {
-                v.setCircleColor(mYearSelectedCircleColor);
-            }
-            return v;
-        }
-
-        public void setItemTextAppearance(int resId) {
-            mItemTextAppearanceResId = resId;
-        }
+        return years;
     }
 
-    public void postSetSelectionCentered(final int position) {
-        postSetSelectionFromTop(position, mViewSize / 2 - mChildSize / 2);
-    }
-
-    public void postSetSelectionFromTop(final int position, final int offset) {
-        post(new Runnable() {
-            @Override
-            public void run() {
-                YearPickerView.this.setSelectionFromTop(position, offset);
-                requestLayout();
-            }
-        });
-    }
 
     public int getFirstPositionOffset() {
         final View firstChild = getChildAt(0);
@@ -181,10 +128,7 @@ class YearPickerView extends ListView implements AdapterView.OnItemClickListener
 
     @Override
     public void onDateChanged() {
-        updateAdapterData();
-        mAdapter.notifyDataSetChanged();
-        postSetSelectionCentered(
-                mController.getSelectedDay().get(Calendar.YEAR) - mMinDate.get(Calendar.YEAR));
+        scrollToPosition((manager.findLastVisibleItemPosition() - manager.findFirstVisibleItemPosition()) / 2 - 1);
     }
 
     @Override
@@ -194,6 +138,120 @@ class YearPickerView extends ListView implements AdapterView.OnItemClickListener
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             event.setFromIndex(0);
             event.setToIndex(0);
+        }
+    }
+
+    @Override
+    public void onYearSelected(Integer year) {
+        mController.tryVibrate();
+        mController.onYearSelected(year);
+    }
+
+    public int getFirstVisiblePosition() {
+        return manager.findFirstVisibleItemPosition();
+    }
+
+    private class YearAdapter extends RecyclerView.Adapter<YearViewHolder> {
+        private List<Integer> years;
+        private Context context;
+        private int selectedPosition;
+        private @ColorInt
+        int selectedColor;
+        private OnYearSelectedListener listener;
+        int lastSelectedPosition;
+
+        YearAdapter(Context context, List<Integer> years, int selectedYear, OnYearSelectedListener listener) {
+            this.years = years;
+            this.context = context;
+            selectedPosition = years.indexOf(selectedYear);
+            lastSelectedPosition = selectedPosition;
+            selectedColor = mYearSelectedColor;
+            this.listener = listener;
+        }
+
+
+        //        int mItemTextAppearanceResId;
+
+//        public YearAdapter(Context context, int resource) {
+//            super(context, resource);
+//        }
+
+//        @Override
+//        public View getView(int position, View convertView, ViewGroup parent) {
+//            TextViewWithCircularIndicator v = (TextViewWithCircularIndicator)
+//                    super.getView(position, convertView, parent);
+//            v.setTextAppearance(getContext(), mItemTextAppearanceResId);
+//            v.requestLayout();
+//            int year = getItem(position);
+//            boolean selected = mController.getSelectedDay().get(Calendar.YEAR) == year;
+//            v.setDrawIndicator(selected);
+//            if (selected) {
+//                v.setCircleColor(mYearSelectedColor);
+//            }
+//            return v;
+//        }
+
+//        public void setItemTextAppearance(int resId) {
+//            mItemTextAppearanceResId = resId;
+//        }
+
+        @NonNull
+        @Override
+        public YearViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            TextView textView = new TextView(context);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            return new YearViewHolder(textView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull final YearViewHolder holder, final int position) {
+            final int year = years.get(position);
+            holder.setText(String.valueOf(year));
+            if (position == selectedPosition) {
+                holder.setTextSize(20);
+                holder.setTextColor(ContextCompat.getColor(context, android.R.color.holo_blue_dark));
+            } else {
+                holder.setTextSize(24);
+                holder.setTextColor(ContextCompat.getColor(context, android.R.color.black));
+            }
+            holder.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listener.onYearSelected(years.get(holder.getAdapterPosition()));
+                    notifyItemChanged(lastSelectedPosition);
+                    lastSelectedPosition = holder.getAdapterPosition();
+                    notifyItemChanged(lastSelectedPosition);
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return years.size();
+        }
+
+    }
+
+
+    private class YearViewHolder extends ViewHolder {
+        public YearViewHolder(TextView itemView) {
+            super(itemView);
+        }
+
+        void setText(String text) {
+            ((TextView) itemView).setText(text);
+        }
+
+        void setTextSize(float sizeSp) {
+            ((TextView) itemView).setTextSize(Dimension.SP, sizeSp);
+        }
+
+        void setTextColor(@ColorInt int color) {
+            ((TextView) itemView).setTextColor(color);
+        }
+
+        void setOnClickListener(OnClickListener listener) {
+            itemView.setOnClickListener(listener);
         }
     }
 }

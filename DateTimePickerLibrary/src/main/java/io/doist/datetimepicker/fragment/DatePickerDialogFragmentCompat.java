@@ -48,6 +48,14 @@ public class DatePickerDialogFragmentCompat extends DialogFragment {
         return fragment;
     }
 
+    public static DatePickerDialogFragmentCompat newInstance(OnDateSetListener listener, int year, int monthOfYear,
+                                                             int dayOfMonth, int anchorYear, int anchorMonthOfYear, int anchorDayOfMonth) {
+        DatePickerDialogFragmentCompat fragment = new DatePickerDialogFragmentCompat();
+        fragment.setArguments(DatePickerDialogFragmentDelegate.createArguments(year, monthOfYear, dayOfMonth, anchorYear, anchorMonthOfYear, anchorDayOfMonth));
+        fragment.setOnDateSetListener(listener);
+        return fragment;
+    }
+
     @SuppressWarnings("InflateParams")
     @NonNull
     @Override
