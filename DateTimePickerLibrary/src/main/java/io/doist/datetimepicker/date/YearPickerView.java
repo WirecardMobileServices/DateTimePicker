@@ -127,13 +127,11 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
     public void onDateChanged() {
         int offset = 2; //((manager.findLastVisibleItemPosition() - manager.findFirstVisibleItemPosition()) / 2 );
         int firstCompletlyVisiblePosition = manager.findFirstCompletelyVisibleItemPosition();
-        if (firstCompletlyVisiblePosition >= 0) {
             if (mAdapter.getSelectedPosition() < firstCompletlyVisiblePosition + offset) {
                 scrollToPosition(firstCompletlyVisiblePosition - Math.abs(mAdapter.getSelectedPosition() - firstCompletlyVisiblePosition - offset));
             } else {
                 scrollToPosition(manager.findLastCompletelyVisibleItemPosition() + (mAdapter.getSelectedPosition() - firstCompletlyVisiblePosition - offset));
             }
-        }
     }
 
     @Override
