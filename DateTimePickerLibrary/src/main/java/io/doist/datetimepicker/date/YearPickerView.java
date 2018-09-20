@@ -17,7 +17,9 @@
 package io.doist.datetimepicker.date;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Dimension;
 import android.support.annotation.NonNull;
@@ -25,7 +27,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
@@ -45,7 +47,6 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
     private final Calendar mMaxDate = Calendar.getInstance();
 
     private YearAdapter mAdapter;
-    private final int mChildSize;
 
     private DatePickerController mController;
 
@@ -67,16 +68,17 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
         setLayoutParams(frame);
 
         final Resources res = context.getResources();
-        mChildSize = res.getDimensionPixelOffset(R.dimen.datepicker_year_label_height);
+        int mChildSize = res.getDimensionPixelOffset(R.dimen.datepicker_year_label_height);
 
         setVerticalFadingEdgeEnabled(true);
         setFadingEdgeLength(mChildSize / 3);
 
-        final int paddingTop = res.getDimensionPixelSize(R.dimen.datepicker_year_picker_padding_top);
-        setPadding(0, paddingTop, 0, 0);
+        setPadding(0, 0, 0, 0);
         Calendar now = Calendar.getInstance();
-        mMinDate.set(Calendar.YEAR, now.get(Calendar.YEAR) - 100);
-        mMaxDate.set(Calendar.YEAR, now.get(Calendar.YEAR) + 100);
+        int defaultYearRange = 100;
+        mMinDate.set(Calendar.YEAR, now.get(Calendar.YEAR) - defaultYearRange);
+        mMaxDate.set(Calendar.YEAR, now.get(Calendar.YEAR) + defaultYearRange);
+        mYearSelectedColor = ColorStateList.valueOf(Color.BLACK).getColorForState(ENABLED_SELECTED_STATE_SET, res.getColor(android.R.color.holo_blue_light));
     }
 
     public void setRange(Calendar min, Calendar max) {
@@ -90,8 +92,8 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
         setLayoutManager(manager);
         mAdapter = new YearAdapter(getContext(), updateToAdapterData(), Calendar.getInstance().get(Calendar.YEAR), this);
         setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
         onDateChanged();
+
     }
 
     public void setYearSelectedCircleColor(int color) {
@@ -128,7 +130,10 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
 
     @Override
     public void onDateChanged() {
-        scrollToPosition((manager.findLastVisibleItemPosition() - manager.findFirstVisibleItemPosition()) / 2 - 1);
+        int offset = 2; //((manager.findLastVisibleItemPosition() - manager.findFirstVisibleItemPosition()) / 2 );
+        if (mAdapter.getSelectedPosition() - offset > 0) {
+            scrollToPosition(mAdapter.getSelectedPosition() - offset);
+        }
     }
 
     @Override
@@ -145,6 +150,7 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
     public void onYearSelected(Integer year) {
         mController.tryVibrate();
         mController.onYearSelected(year);
+        onDateChanged();
     }
 
     public int getFirstVisiblePosition() {
@@ -169,38 +175,11 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
             this.listener = listener;
         }
 
-
-        //        int mItemTextAppearanceResId;
-
-//        public YearAdapter(Context context, int resource) {
-//            super(context, resource);
-//        }
-
-//        @Override
-//        public View getView(int position, View convertView, ViewGroup parent) {
-//            TextViewWithCircularIndicator v = (TextViewWithCircularIndicator)
-//                    super.getView(position, convertView, parent);
-//            v.setTextAppearance(getContext(), mItemTextAppearanceResId);
-//            v.requestLayout();
-//            int year = getItem(position);
-//            boolean selected = mController.getSelectedDay().get(Calendar.YEAR) == year;
-//            v.setDrawIndicator(selected);
-//            if (selected) {
-//                v.setCircleColor(mYearSelectedColor);
-//            }
-//            return v;
-//        }
-
-//        public void setItemTextAppearance(int resId) {
-//            mItemTextAppearanceResId = resId;
-//        }
-
         @NonNull
         @Override
         public YearViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            TextView textView = new TextView(context);
-            textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            return new YearViewHolder(textView);
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            return new YearViewHolder(inflater.inflate(R.layout.row_year_picker, parent, false).findViewById(R.id.rowContainer));
         }
 
         @Override
@@ -208,19 +187,20 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
             final int year = years.get(position);
             holder.setText(String.valueOf(year));
             if (position == selectedPosition) {
-                holder.setTextSize(20);
-                holder.setTextColor(ContextCompat.getColor(context, android.R.color.holo_blue_dark));
-            } else {
                 holder.setTextSize(24);
+                holder.setTextColor(selectedColor);
+            } else {
+                holder.setTextSize(16);
                 holder.setTextColor(ContextCompat.getColor(context, android.R.color.black));
             }
             holder.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    selectedPosition = holder.getAdapterPosition();
+                    notifyItemChanged(lastSelectedPosition);
+                    lastSelectedPosition = selectedPosition;
+                    notifyItemChanged(lastSelectedPosition);
                     listener.onYearSelected(years.get(holder.getAdapterPosition()));
-                    notifyItemChanged(lastSelectedPosition);
-                    lastSelectedPosition = holder.getAdapterPosition();
-                    notifyItemChanged(lastSelectedPosition);
                 }
             });
         }
@@ -230,28 +210,34 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
             return years.size();
         }
 
+        int getSelectedPosition() {
+            return selectedPosition;
+        }
     }
 
 
     private class YearViewHolder extends ViewHolder {
-        public YearViewHolder(TextView itemView) {
+        private TextView year;
+
+        YearViewHolder(View itemView) {
             super(itemView);
+            year = itemView.findViewById(R.id.year);
         }
 
         void setText(String text) {
-            ((TextView) itemView).setText(text);
+            year.setText(text);
         }
 
         void setTextSize(float sizeSp) {
-            ((TextView) itemView).setTextSize(Dimension.SP, sizeSp);
+            year.setTextSize(Dimension.SP, sizeSp);
         }
 
         void setTextColor(@ColorInt int color) {
-            ((TextView) itemView).setTextColor(color);
+            year.setTextColor(color);
         }
 
         void setOnClickListener(OnClickListener listener) {
-            itemView.setOnClickListener(listener);
+            year.setOnClickListener(listener);
         }
     }
 }

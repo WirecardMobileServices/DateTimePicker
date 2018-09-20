@@ -65,7 +65,9 @@ class SimpleMonthView extends View {
     private static final int DEFAULT_NUM_ROWS = 6;
     private static final int MAX_NUM_ROWS = 6;
 
-    private static final int SELECTED_CIRCLE_ALPHA = 60;
+    private static final int SELECTED_CIRCLE_ALPHA = 255;
+    private static final int ANCHOR_CIRCLE_ALPHA = 97;
+    private static final int RANGE_CIRCLE_ALPHA = 31;
 
     private static final int DAY_SEPARATOR_WIDTH = 1;
 
@@ -97,6 +99,10 @@ class SimpleMonthView extends View {
 
     private Paint mMonthTitlePaint;
     private Paint mMonthDayLabelPaint;
+
+    private Paint anchorRangePaint;
+    private Paint anchorPaint;
+    private Paint mSelectedDayNumberPaint;
 
     private int mMonth;
     private int mYear;
@@ -151,7 +157,7 @@ class SimpleMonthView extends View {
     private int mSelectedDayColor;
     private int anchor = -1;
     private Mark markDays = Mark.NONE;
-    private Paint mSelectedDayNumberPaint;
+
 
 
     public SimpleMonthView(Context context) {
@@ -201,8 +207,7 @@ class SimpleMonthView extends View {
     void setTextColor(ColorStateList colors) {
         final Resources res = getContext().getResources();
 
-        mNormalTextColor = colors.getColorForState(
-                ENABLED_STATE_SET, res.getColor(R.color.datepicker_default_normal_text_color_holo_light));
+        mNormalTextColor = res.getColor(R.color.datepicker_default_normal_text_color_holo_light);
         mMonthTitlePaint.setColor(mNormalTextColor);
         mMonthDayLabelPaint.setColor(mNormalTextColor);
 
@@ -210,6 +215,10 @@ class SimpleMonthView extends View {
         mDayNumberDisabledPaint.setColor(mDisabledTextColor);
 
         mSelectedDayColor = colors.getColorForState(ENABLED_SELECTED_STATE_SET, res.getColor(android.R.color.holo_blue_light));
+        anchorRangePaint.setColor(mSelectedDayColor);
+        anchorPaint.setColor(mSelectedDayColor);
+        anchorRangePaint.setAlpha(RANGE_CIRCLE_ALPHA);
+        anchorPaint.setAlpha(ANCHOR_CIRCLE_ALPHA);
         mDayNumberSelectedPaint.setColor(mSelectedDayColor);
         mDayNumberSelectedPaint.setAlpha(SELECTED_CIRCLE_ALPHA);
     }
@@ -254,10 +263,10 @@ class SimpleMonthView extends View {
         mMonthTitlePaint.setAntiAlias(true);
         mMonthTitlePaint.setColor(mNormalTextColor);
         mMonthTitlePaint.setTextSize(mMonthLabelTextSize);
-        mMonthTitlePaint.setTypeface(Typeface.create(mMonthTitleTypeface, Typeface.BOLD));
+        mMonthTitlePaint.setTypeface(Typeface.create(mMonthTitleTypeface, Typeface.NORMAL));
         mMonthTitlePaint.setTextAlign(Align.CENTER);
         mMonthTitlePaint.setStyle(Style.FILL);
-        mMonthTitlePaint.setFakeBoldText(true);
+        mMonthTitlePaint.setFakeBoldText(false);
 
         mMonthDayLabelPaint = new Paint();
         mMonthDayLabelPaint.setAntiAlias(true);
@@ -297,6 +306,10 @@ class SimpleMonthView extends View {
         mDayNumberDisabledPaint.setTextAlign(Align.CENTER);
         mDayNumberDisabledPaint.setStyle(Style.FILL);
         mDayNumberDisabledPaint.setFakeBoldText(false);
+
+        anchorRangePaint = new Paint(mDayNumberSelectedPaint);
+        anchorPaint = new Paint(mDayNumberSelectedPaint);
+
     }
 
     @Override
@@ -422,7 +435,7 @@ class SimpleMonthView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mRowHeight * mNumRows + mMonthHeaderSize);
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mRowHeight * mNumRows + mMonthHeaderSize + getResources().getDimensionPixelSize(R.dimen.datepicker_padding));
     }
 
     @Override
@@ -463,7 +476,7 @@ class SimpleMonthView extends View {
                 dayLabel = getDayLabelCompat(mDayLabelCalendar);
             }
             final int x = (2 * i + 1) * dayWidthHalf + mPadding;
-            canvas.drawText(dayLabel, x, y, mMonthDayLabelPaint);
+            canvas.drawText(dayLabel, x, y, mDayNumberDisabledPaint);
         }
     }
 
@@ -481,10 +494,7 @@ class SimpleMonthView extends View {
      * Draws the month days.
      */
     private void drawDays(Canvas canvas) {
-        Paint anchorRangePaint = new Paint(mDayNumberSelectedPaint);
-        anchorRangePaint.setAlpha(30);
-        Paint anchorPaint = new Paint(mDayNumberSelectedPaint);
-        anchorPaint.setAlpha(96);
+
         int y = (((mRowHeight + mMiniDayNumberTextSize) / 2) - DAY_SEPARATOR_WIDTH) + mMonthHeaderSize;
         int dayWidthHalf = (mWidth - mPadding * 2) / (mNumDays * 2);
         int j = findDayOffset();

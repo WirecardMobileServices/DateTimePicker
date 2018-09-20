@@ -138,9 +138,9 @@ class SimpleMonthAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         final SimpleMonthView v;
-//        if (convertView != null) {
-//            v = (SimpleMonthView) convertView;
-//        } else {
+        if (convertView != null) {
+            v = (SimpleMonthView) convertView;
+        } else {
         v = new SimpleMonthView(mContext);
 
         // Set up the new view
@@ -153,7 +153,7 @@ class SimpleMonthAdapter extends BaseAdapter {
         if (mCalendarTextColors != null) {
             v.setTextColor(mCalendarTextColors);
         }
-//        }
+        }
 
         final int minMonth = mMinDate.get(Calendar.MONTH);
         final int minYear = mMinDate.get(Calendar.YEAR);
