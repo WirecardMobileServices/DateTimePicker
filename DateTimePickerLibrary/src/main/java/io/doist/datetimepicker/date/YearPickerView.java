@@ -17,9 +17,7 @@
 package io.doist.datetimepicker.date;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Dimension;
 import android.support.annotation.NonNull;
@@ -78,7 +76,6 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
         int defaultYearRange = 100;
         mMinDate.set(Calendar.YEAR, now.get(Calendar.YEAR) - defaultYearRange);
         mMaxDate.set(Calendar.YEAR, now.get(Calendar.YEAR) + defaultYearRange);
-        mYearSelectedColor = ColorStateList.valueOf(Color.BLACK).getColorForState(ENABLED_SELECTED_STATE_SET, res.getColor(android.R.color.holo_blue_light));
     }
 
     public void setRange(Calendar min, Calendar max) {
@@ -92,8 +89,6 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
         setLayoutManager(manager);
         mAdapter = new YearAdapter(getContext(), updateToAdapterData(), Calendar.getInstance().get(Calendar.YEAR), this);
         setAdapter(mAdapter);
-        onDateChanged();
-
     }
 
     public void setYearSelectedCircleColor(int color) {
@@ -131,8 +126,13 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
     @Override
     public void onDateChanged() {
         int offset = 2; //((manager.findLastVisibleItemPosition() - manager.findFirstVisibleItemPosition()) / 2 );
-        if (mAdapter.getSelectedPosition() - offset > 0) {
-            scrollToPosition(mAdapter.getSelectedPosition() - offset);
+        int firstCompletlyVisiblePosition = manager.findFirstCompletelyVisibleItemPosition();
+        if (firstCompletlyVisiblePosition >= 0) {
+            if (mAdapter.getSelectedPosition() < firstCompletlyVisiblePosition + offset) {
+                scrollToPosition(firstCompletlyVisiblePosition - Math.abs(mAdapter.getSelectedPosition() - firstCompletlyVisiblePosition - offset));
+            } else {
+                scrollToPosition(manager.findLastCompletelyVisibleItemPosition() + (mAdapter.getSelectedPosition() - firstCompletlyVisiblePosition - offset));
+            }
         }
     }
 

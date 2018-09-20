@@ -163,10 +163,11 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         });
 
         mYearPickerView = new YearPickerView(mContext);
-        mYearPickerView.init(this);
-
         final int yearSelectedCircleColor = a.getColor(R.styleable.DatePicker_yearListSelectorColor, defaultHighlightColor);
         mYearPickerView.setYearSelectedCircleColor(yearSelectedCircleColor);
+        mYearPickerView.init(this);
+
+
 
         final ColorStateList calendarTextColor = a.getColorStateList(R.styleable.DatePicker_calendarTextColor);
         final int calendarSelectedTextColor = a.getColor(R.styleable.DatePicker_calendarSelectedTextColor, defaultHighlightColor);
@@ -250,7 +251,6 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
                 mAnimator.announceForAccessibility(mSelectDay);
                 break;
             case YEAR_VIEW:
-                mYearPickerView.onDateChanged();
                 if (mCurrentView != viewIndex) {
                     dateTextView.setSelected(false);
                     mHeaderYearTextView.setSelected(true);
@@ -261,6 +261,7 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
                 final CharSequence yearString = mYearFormat.format(millis);
                 mAnimator.setContentDescription(mYearPickerDescription + ": " + yearString);
                 mAnimator.announceForAccessibility(mSelectYear);
+                mYearPickerView.onDateChanged();
                 break;
         }
     }
