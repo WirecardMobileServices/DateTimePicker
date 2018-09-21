@@ -151,6 +151,10 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
         onDateChanged();
     }
 
+    public void setSelectedYear(int year) {
+        mAdapter.setSelectedYear(year);
+    }
+
     public int getFirstVisiblePosition() {
         return manager.findFirstVisibleItemPosition();
     }
@@ -171,6 +175,11 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
             lastSelectedPosition = selectedPosition;
             selectedColor = mYearSelectedColor;
             this.listener = listener;
+        }
+
+        public void setSelectedYear(int year) {
+            selectedPosition = years.indexOf(year);
+            updateSelection(selectedPosition);
         }
 
         @NonNull
@@ -194,13 +203,17 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
             holder.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    selectedPosition = holder.getAdapterPosition();
-                    notifyItemChanged(lastSelectedPosition);
-                    lastSelectedPosition = selectedPosition;
-                    notifyItemChanged(lastSelectedPosition);
+                    updateSelection(holder.getAdapterPosition());
                     listener.onYearSelected(years.get(holder.getAdapterPosition()));
                 }
             });
+        }
+
+        private void updateSelection(int position) {
+            selectedPosition = position;
+            notifyItemChanged(lastSelectedPosition);
+            lastSelectedPosition = selectedPosition;
+            notifyItemChanged(lastSelectedPosition);
         }
 
         @Override

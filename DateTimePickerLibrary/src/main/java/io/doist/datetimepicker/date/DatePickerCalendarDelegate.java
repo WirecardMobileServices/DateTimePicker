@@ -155,6 +155,11 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         mHeaderYearTextView.setTextColor(ViewStateUtils.addStateIfMissing(
                 mHeaderYearTextView.getTextColors(), android.R.attr.state_selected, headerSelectedTextColor));
 
+        mYearPickerView = new YearPickerView(mContext);
+        final int yearSelectedCircleColor = a.getColor(R.styleable.DatePicker_yearListSelectorColor, defaultHighlightColor);
+        mYearPickerView.setYearSelectedCircleColor(yearSelectedCircleColor);
+        mYearPickerView.init(this);
+
         mDayPickerView = new DayPickerView(mContext);
         mDayPickerView.setFirstDayOfWeek(mFirstDayOfWeek);
         mDayPickerView.setMinDate(mMinDate.getTimeInMillis());
@@ -165,14 +170,9 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
             public void onDaySelected(SimpleMonthAdapter adapter, Calendar day) {
                 mCurrentDate.setTimeInMillis(day.getTimeInMillis());
                 onDateChanged(true, true);
+                mYearPickerView.setSelectedYear(day.get(Calendar.YEAR));
             }
         });
-
-        mYearPickerView = new YearPickerView(mContext);
-        final int yearSelectedCircleColor = a.getColor(R.styleable.DatePicker_yearListSelectorColor, defaultHighlightColor);
-        mYearPickerView.setYearSelectedCircleColor(yearSelectedCircleColor);
-        mYearPickerView.init(this);
-
 
 
         final ColorStateList calendarTextColor = a.getColorStateList(R.styleable.DatePicker_calendarTextColor);
