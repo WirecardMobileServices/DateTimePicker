@@ -81,13 +81,13 @@ class YearPickerView extends RecyclerView implements OnDateChangedListener, OnYe
     public void setMinDate(long min) {
         mMinDate.setTimeInMillis(min);
         mAdapter = new YearAdapter(getContext(), updateToAdapterData(), Calendar.getInstance().get(Calendar.YEAR), this);
-
+        setAdapter(mAdapter);
     }
 
     public void setMaxDate(long max) {
         mMaxDate.setTimeInMillis(max);
         mAdapter = new YearAdapter(getContext(), updateToAdapterData(), Calendar.getInstance().get(Calendar.YEAR), this);
-
+        setAdapter(mAdapter);
     }
 
     public void init(DatePickerController controller) {
