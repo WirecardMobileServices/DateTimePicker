@@ -14,19 +14,56 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="@dimen/datepicker_view_animator_height"
-              android:gravity="center"
-              android:orientation="horizontal"
-              android:minWidth="@dimen/datepicker_dialog_width" >
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linearLayout2"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/datepicker_view_animator_height"
+    android:gravity="center"
+    android:minWidth="@dimen/datepicker_dialog_width">
 
     <include
+        android:id="@+id/day_picker_selector_layout"
         layout="@layout/date_picker_selected_date"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/datepicker_view_animator_height"
+        app:layout_constraintEnd_toStartOf="@+id/animator"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent=".38" />
+
+    <ImageView
+        android:id="@+id/prev"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/datepicker_arrow_padding"
+        android:layout_marginStart="@dimen/datepicker_arrow_padding"
+        android:layout_marginTop="@dimen/datepicker_padding"
+        android:contentDescription="@string/previous_month"
+        app:layout_constraintStart_toStartOf="@+id/animator"
+        app:layout_constraintTop_toTopOf="@+id/animator"
+        app:srcCompat="@drawable/ic_baseline_keyboard_arrow_left_24px" />
 
-    <include layout="@layout/date_picker_view_animator" />
+    <ImageView
+        android:id="@+id/next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/datepicker_arrow_padding"
+        android:layout_marginRight="@dimen/datepicker_arrow_padding"
+        android:layout_marginTop="@dimen/datepicker_padding"
+        android:contentDescription="@string/next_month"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/animator"
+        app:srcCompat="@drawable/ic_baseline_keyboard_arrow_right_24px" />
 
-</LinearLayout>
+    <include
+        android:id="@+id/animator"
+        layout="@layout/date_picker_view_animator"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/datepicker_view_animator_height"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/day_picker_selector_layout"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</android.support.constraint.ConstraintLayout>

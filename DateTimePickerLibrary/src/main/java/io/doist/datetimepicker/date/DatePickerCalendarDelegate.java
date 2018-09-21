@@ -37,6 +37,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -67,7 +68,7 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
 
     private TextView dateTextView;
     private TextView mHeaderYearTextView;
-    private DayPickerViewR mDayPickerView;
+    private DayPickerView mDayPickerView;
     private YearPickerView mYearPickerView;
 
     private boolean mIsEnabled = true;
@@ -91,6 +92,8 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
 
     private int mFirstDayOfWeek = USE_LOCALE;
 
+    private ImageView next, prev;
+
 
     private HashSet<OnDateChangedListener> mListeners = new HashSet<>();
     private Calendar anchorDate = null;
@@ -113,6 +116,9 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         final int layoutResourceId = a.getResourceId(R.styleable.DatePicker_layout, R.layout.date_picker_holo);
         final View mainView = inflater.inflate(layoutResourceId, null);
         mDelegator.addView(mainView);
+        //just place holders, logic is in SimpleMonthView#checkArrowClick
+        next = mainView.findViewById(R.id.next);
+        prev = mainView.findViewById(R.id.prev);
 
         // Layout that contains the current date and day name header.
         final ConstraintLayout dateLayout = mainView.findViewById(R.id.day_picker_selector_layout);
@@ -149,14 +155,14 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         mHeaderYearTextView.setTextColor(ViewStateUtils.addStateIfMissing(
                 mHeaderYearTextView.getTextColors(), android.R.attr.state_selected, headerSelectedTextColor));
 
-        mDayPickerView = new DayPickerViewR(mContext);
+        mDayPickerView = new DayPickerView(mContext);
         mDayPickerView.setFirstDayOfWeek(mFirstDayOfWeek);
         mDayPickerView.setMinDate(mMinDate.getTimeInMillis());
         mDayPickerView.setMaxDate(mMaxDate.getTimeInMillis());
         mDayPickerView.setDate(mCurrentDate.getTimeInMillis());
-        mDayPickerView.setOnDaySelectedListener(new SimpleMonthAdapterR.OnDaySelectedListener() {
+        mDayPickerView.setOnDaySelectedListener(new SimpleMonthAdapter.OnDaySelectedListener() {
             @Override
-            public void onDaySelected(SimpleMonthAdapterR adapter, Calendar day) {
+            public void onDaySelected(SimpleMonthAdapter adapter, Calendar day) {
                 mCurrentDate.setTimeInMillis(day.getTimeInMillis());
                 onDateChanged(true, true);
             }
@@ -245,6 +251,8 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
                     mCurrentView = viewIndex;
                 }
 
+                next.setVisibility(View.VISIBLE);
+                prev.setVisibility(View.VISIBLE);
                 final int flags = DateUtils.FORMAT_SHOW_DATE;
                 final String dayString = DateUtils.formatDateTime(mContext, millis, flags);
                 mAnimator.setContentDescription(mDayPickerDescription + ": " + dayString);
@@ -257,7 +265,8 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
                     mAnimator.setDisplayedChild(YEAR_VIEW);
                     mCurrentView = viewIndex;
                 }
-
+                next.setVisibility(View.INVISIBLE);
+                prev.setVisibility(View.INVISIBLE);
                 final CharSequence yearString = mYearFormat.format(millis);
                 mAnimator.setContentDescription(mYearPickerDescription + ": " + yearString);
                 mAnimator.announceForAccessibility(mSelectYear);

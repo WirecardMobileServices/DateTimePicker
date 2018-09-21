@@ -37,6 +37,7 @@ import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -249,10 +250,17 @@ class SimpleMonthView extends View {
                 final int day = getDayFromLocation(event.getX(), event.getY());
                 if (day >= 0) {
                     onDayClick(day);
+                } else {
+                    checkArrowClick(event.getX(), event.getY());
                 }
                 break;
         }
         return true;
+    }
+
+    @Override
+    public boolean performClick() {
+        return super.performClick();
     }
 
     /**
@@ -572,6 +580,19 @@ class SimpleMonthView extends View {
             return -1;
         }
         return day;
+    }
+
+    private void checkArrowClick(float x, float y) {
+        int arrowPadding = getResources().getDimensionPixelSize(R.dimen.datepicker_arrow_padding);
+        int imageSize = getResources().getDimensionPixelSize(R.dimen.datepicker_arrow_size);
+        float offset = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        if (y >= mPadding - offset && y <= mPadding + imageSize + offset) {
+            if (x >= arrowPadding - offset && x <= arrowPadding + imageSize + offset) {
+                ((DayPickerView) getParent()).prevMonth();
+            } else if (x <= getWidth() - arrowPadding - offset && x >= getWidth() - arrowPadding - imageSize - offset) {
+                ((DayPickerView) getParent()).nextMonth();
+            }
+        }
     }
 
     /**
