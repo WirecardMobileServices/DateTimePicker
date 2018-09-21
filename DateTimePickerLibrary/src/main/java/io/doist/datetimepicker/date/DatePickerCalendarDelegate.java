@@ -349,7 +349,7 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         }
         mMinDate.setTimeInMillis(minDate);
         mDayPickerView.setMinDate(minDate);
-        mYearPickerView.setRange(mMinDate, mMaxDate);
+        mYearPickerView.setMinDate(minDate);
     }
 
     @Override
@@ -370,7 +370,7 @@ class DatePickerCalendarDelegate extends DatePicker.AbstractDatePickerDelegate i
         }
         mMaxDate.setTimeInMillis(maxDate);
         mDayPickerView.setMaxDate(maxDate);
-        mYearPickerView.setRange(mMinDate, mMaxDate);
+        mYearPickerView.setMaxDate(maxDate);
     }
 
     @Override
