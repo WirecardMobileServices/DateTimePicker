@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import io.doist.datetimepicker.R;
 
@@ -27,6 +28,8 @@ public class SimpleMonthAdapter extends RecyclerView.Adapter<SimpleMonthAdapter.
     private int mFirstDayOfWeek;
 
     public SimpleMonthAdapter(Context mContext) {
+        mMaxDate.setTimeZone(TimeZone.getTimeZone("UTC"));
+        mMinDate.setTimeZone(TimeZone.getTimeZone("UTC"));
         this.mContext = mContext;
     }
 
