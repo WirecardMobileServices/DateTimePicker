@@ -5,14 +5,15 @@
     android:paddingBottom="16dp"
     android:layout_width="@dimen/datepicker_component_width"
     android:layout_height="wrap_content"
-    android:gravity="center">
+    android:gravity="center"
+    android:paddingLeft="@dimen/datepicker_padding"
+    android:paddingRight="@dimen/datepicker_padding"
+    >
 
     <TextView
         android:id="@+id/date_picker_year"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/datepicker_padding"
-        android:layout_marginStart="@dimen/datepicker_padding"
         android:layout_marginTop="@dimen/datepicker_padding"
         android:gravity="center"
         android:textSize="@dimen/datepicker_year_text_size"
